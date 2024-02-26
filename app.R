@@ -315,6 +315,46 @@ server <- function(input, output) {
         s$columns$titles[i] <- eurostat::label_eurostat_vars(x = s$columns$titles[i], id = input$dataset_id, lang = input$lang)
       }
 
+      ######################
+      # Define primary key for the table (adjust 'column_name' to your actual primary key column)
+      s$tableSchema$primaryKey <- "column_name"
+      # Define foreign keys - adjust to your dataset's requirements
+      s$tableSchema$foreignKeys <- list(
+        list(
+          columnReference = "foreign_key_column",
+          reference = list(
+            resource = "external_table.csv",
+            columnReference = "primary_key_column"
+          )
+        )
+      )
+      externalTables <- list(
+        list(
+          url = "path/to/external_table.csv",
+          tableSchema = list(
+            columns = list(
+              list(name = "primary_key_column", titles = "Primary Key Column", dataType = "string"),
+              list(name = "other_column", titles = "Other Column", dataType = "integer")
+            ),
+            foreignKeys = list(
+              list(
+                columnReference = "other_column",
+                reference = list(
+                  resource = "main_table.csv", # Assume 'main_table.csv' is the main dataset CSV file
+                  columnReference = "foreign_key_column"
+                )
+              )
+            )
+          )
+        )
+      )
+
+      v$tb <- list(
+        url = v$metadata$DOI_URL,
+        tableSchema = s,
+        foreignTables = externalTables # Add the external tables to the metadata
+      )
+      #########
       v$tb <- list(url=v$metadata$DOI_URL, tableSchema=s)
       v$m <- csvwr::create_metadata(tables=list(v$tb))
       v$json_metadata <- jsonlite::toJSON(v$m)
